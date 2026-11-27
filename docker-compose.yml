@@ -1,0 +1,24 @@
+services:
+  mhddos:
+    build:
+      context: .
+    image: ghcr.io/matrixtm/mhddos:latest
+    container_name: mhddos
+    restart: "no"
+    init: true
+    stdin_open: true
+    tty: true
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./files:/app/files
+    # Layer 4 raw-socket methods (SYN, ICMP, amplification) need NET_RAW.
+    cap_add:
+      - NET_RAW
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
