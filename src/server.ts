@@ -15,13 +15,20 @@ const getArg = (flag: string) => {
     return idx !== -1 && args[idx + 1] ? args[idx + 1] : null;
 };
 
-const HOST = getArg('--host') || process.env.WEB_HOST || process.env.HOST || '127.0.0.1';
-const PORT = parseInt(getArg('--port') || process.env.WEB_PORT || process.env.PORT || '5000', 10);
+const HOST = getArg('--host') || process.env.WEB_HOST || process.env.HOST || '0.0.0.0';
+const PORT = parseInt(getArg('--port') || process.env.WEB_PORT || process.env.PORT || '10000', 10);
 
-const BASE_DIR = path.resolve(__dirname, '..', '..');
-const PYTHON_EXE = fs.existsSync(path.join(BASE_DIR, '.venv', 'Scripts', 'python.exe'))
-    ? path.join(BASE_DIR, '.venv', 'Scripts', 'python.exe')
-    : 'python';
+const BASE_DIR = fs.existsSync(path.join(__dirname, 'start.py'))
+    ? __dirname
+    : fs.existsSync(path.join(__dirname, '..', 'start.py'))
+        ? path.resolve(__dirname, '..')
+        : path.resolve(__dirname, '..', '..');
+
+const PYTHON_EXE = process.env.PYTHON_BIN
+    || (fs.existsSync(path.join(BASE_DIR, '.venv', 'Scripts', 'python.exe'))
+        ? path.join(BASE_DIR, '.venv', 'Scripts', 'python.exe')
+        : fs.existsSync('/usr/bin/python3') ? 'python3' : 'python');
+
 
 import jwt from 'jsonwebtoken';
 
