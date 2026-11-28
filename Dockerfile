@@ -1,12 +1,5 @@
 # syntax=docker/dockerfile:1
-
-FROM python:3.15-slim-bookworm
-
-LABEL org.opencontainers.image.title="MHDDoS" \
-      org.opencontainers.image.description="Layer 4/7 stress-testing toolkit" \
-      org.opencontainers.image.source="https://github.com/MatrixTM/MHDDoS" \
-      org.opencontainers.image.licenses="MIT" \
-      maintainer="0xkatana"
+FROM node:20-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -15,19 +8,20 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
-# git is needed only to resolve the PyRoxy git dependency. Install git, install
-# the Python dependencies, then purge git in the same layer so it never reaches
-# the final image.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && pip install --no-cache-dir -r requirements.txt \
-    && apt-get purge -y --auto-remove git \
+    && apt-get install -y --no-install-recommends python3 python3-pip git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY start.py config.json ./
-COPY files ./files
+COPY package*.json ./
+RUN npm ci || npm install
+
+COPY requirements.txt .
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir --break-system-packages -r requirements.txt; fi
+
+COPY . .
+
+RUN apt-get purge -y --auto-remove git && rm -rf /var/lib/apt/lists/*
 
 STOPSIGNAL SIGINT
 
-ENTRYPOINT ["python", "start.py"]
+CMD ["sh", "-c", "npx tsx src/server.ts --host 0.0.0.0 --port ${PORT:-10000}"]
